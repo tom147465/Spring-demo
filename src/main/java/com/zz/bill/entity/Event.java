@@ -1,10 +1,10 @@
 package com.zz.bill.entity;
 
-import com.zz.bill.model.event.EventInfo;
 import com.zz.bill.model.event.EventStatus;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.sql.Timestamp;
 
 
 @Data
@@ -26,15 +26,20 @@ public class Event {
     @Column(name = "creator_uid")
     private Integer creatorUid;
 
+    @Column(name = "created_at")
+    private Timestamp createdAt;
+
+    @PrePersist
+    public void prePersist(){
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        createdAt = timestamp;
+    }
+
     public Event(String eventName, Integer creatorUid){
         this.eventName = eventName;
         this.creatorUid = creatorUid;
     }
 
-    public EventInfo toEventInfo(){
-        return EventInfo.builder().id(this.id).eventName(this.eventName)
-                .status(this.status).creatorUid(this.creatorUid)
-                .build();
-    }
+
 }
 

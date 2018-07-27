@@ -5,9 +5,11 @@ import com.zz.bill.entity.EventUserRel;
 import java.util.List;
 
 public interface IEventUserRelBaseService {
-    List<EventUserRel> insertNewEventUserRel(EventUserRel eventUserRel);
+    List<Integer> insertNewEventUserRel(EventUserRel eventUserRel);
     List<EventUserRel> findAllByEventId(Integer eventId);
-    List<EventUserRel> deleteEventUserRel(EventUserRel eventUserRel);
+    List<Integer> deleteEventUserRel(EventUserRel eventUserRel);
     EventUserRel findByEventIdAndUid(Integer eventId, Integer uid);
+    List<Integer> findAllUidsInEventByEventId(Integer eventId);
+    List<Integer> insertMultiEventUserRel(List<EventUserRel> eventUserRelList);
 }
 

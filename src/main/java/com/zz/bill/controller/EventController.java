@@ -1,60 +1,63 @@
 package com.zz.bill.controller;
 
+
 import com.zz.bill.CommonCode;
 import com.zz.bill.entity.User;
 import com.zz.bill.model.JsonResult;
 import com.zz.bill.model.event.EventInfo;
 import com.zz.bill.service.eventBiz.IEventBizService;
 import com.zz.bill.util.CurrentUserHolder;
+import com.zz.bill.util.Utils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.Currency;
+import java.util.List;
 
 @RestController
-@RequestMapping("/internal/event/{version}")
+@RequestMapping("/internal/event")
 public class EventController {
 
     @Autowired
     private IEventBizService eventBizService;
 
-    @RequestMapping(value = "/create/", method = RequestMethod.POST)
+    @RequestMapping(value = "/create", method = RequestMethod.POST)
     public JsonResult createEvent(@RequestBody @Valid EventInfo eventInfo, BindingResult bindingResult){
 
-        if(bindingResult.hasErrors()){
-            String msg = bindingResult.getAllErrors().get(0).getDefaultMessage();
-            return JsonResult.builder().code(CommonCode.FAIL).msg(msg).data(false).build();
-        }
+//        if(bindingResult.hasErrors()){
+//            String msg = bindingResult.getAllErrors().get(0).getDefaultMessage();
+//            return JsonResult.builder().code(CommonCode.FAIL).msg(msg).data(false).build();
+//        }
+        if(StringUtils.isEmpty(eventInfo.getEventName()))
+            return JsonResult.builder()
+                    .code(CommonCode.PARAM_ERR)
+                    .msg("parameters error")
+                    .data(false).build();
 
-        //todo threadLocal  拿操作人
         User currentUser = CurrentUserHolder.getCurrentUser();
 
         return eventBizService.createEvent(eventInfo, currentUser.getId());
-        /*
-           1.创建Event
-               1.1 eventInfo应该包含Event所必须的数据
-           2.创建初始的EventUserRelation
-               2.1 eventInfo应该包含相关用户的uid的List
-
-           返回对象
-               Data
-                   eventInfo //event的基本信息
-                   List<eventUserRel> 默认的参与人员列表
-        */
     }
 
-    // todo add joinEventWithScan
+    @RequestMapping(value = "/{eventId}/qr", method = RequestMethod.GET)
+    public String getQrCode(@PathVariable Integer eventId){
+        return Utils.encodeQr(eventId);
+    }
 
-    public JsonResult joinEvent(Integer eventId,
-                                Integer joinUid){
-        User currentUser = CurrentUserHolder.getCurrentUser();
 
-        if(joinUid.equals(currentUser.getId()))
-            return eventBizService.joinWithScan(eventId, joinUid);
+    @RequestMapping(value = "/invite/qr/{code}", method = RequestMethod.POST)
+    public JsonResult joinWithQr(@PathVariable String code){
+        Integer eventId = Utils.decodeQr(code);
+        return eventBizService.joinWithScan(eventId, CurrentUserHolder.getCurrentUser().getId());
+    }
 
-        else return eventBizService.joinWithInvite(eventId, joinUid);
+    @RequestMapping(value = "/invite/creator/{eventId}/{userIds}", method = RequestMethod.POST)
+    public JsonResult joinEvent(@PathVariable Integer eventId,
+                                @PathVariable List<Integer> userIds){
+
+        return eventBizService.joinWithInvite(eventId, userIds);
 
        /*
            1.通过ThreadLocal去拿操作人，是谁在操作这个请求
@@ -71,23 +74,12 @@ public class EventController {
         */
     }
 
-    public JsonResult removeUserFromEvent(Integer eventId,
-                                          Integer removeUid){
+    @RequestMapping(value = "/internal/event/{eventId}/kickout/{userId}", method = RequestMethod.POST)
+    public JsonResult removeUserFromEvent(@PathVariable Integer eventId,
+                                          @PathVariable Integer removeUid){
         if(removeUid.equals(CurrentUserHolder.getCurrentUser().getId()))
             return JsonResult.builder().code(CommonCode.FAIL).msg("cannot remove yourself!").data(false).build();
 
         return eventBizService.removeUserFromEvent(eventId, removeUid);
-       /*
-           1.通过ThreadLocal去拿操作人，是谁在操作这个请求
-               1.1 判断权限
-               1.2 用户是否在群里
-                   操作
-           返回对象
-               Data
-                   eventInfo //event的基本信息
-                   List<eventUserRel> 默认的参与人员列表
-               Data
-                   TRUE/FALSE
-        */
     }
 }

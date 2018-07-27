@@ -18,7 +18,6 @@ public class EventBaseServiceImpl implements IEventBaseService {
 
     @Override
     public Event insertNewEvent(Event event) {
-
         return eventRepo.saveAndFlush(event);
     }
 

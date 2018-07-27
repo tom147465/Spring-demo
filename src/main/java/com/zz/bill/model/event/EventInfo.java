@@ -2,10 +2,9 @@ package com.zz.bill.model.event;
 
 import lombok.Builder;
 import lombok.Data;
-import lombok.NonNull;
-
-import javax.persistence.Column;
-import javax.validation.constraints.NotNull;
+import com.zz.bill.entity.Event;
+import java.sql.Timestamp;
+import java.util.List;
 
 
 @Data
@@ -15,12 +14,22 @@ public class EventInfo {
 
     private Integer id;
 
-    @NotNull(message = "event name cannot be null!! ")
     private String eventName;
 
     private EventStatus status;
 
     private Integer creatorUid;
 
+    private List<Integer> userIds;
 
+    private Timestamp createdAt;
+
+
+    public EventInfo(Event event){
+        this.id = event.getId();
+        this.eventName = event.getEventName();
+        this.status = event.getStatus();
+        this.creatorUid = event.getCreatorUid();
+        this.createdAt = event.getCreatedAt();
+    }
 }

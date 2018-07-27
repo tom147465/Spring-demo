@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class EventBizServiceImpl implements IEventBizService {
@@ -29,17 +30,14 @@ public class EventBizServiceImpl implements IEventBizService {
 
 
         Event newEvent = eventBaseService.insertNewEvent(new Event(eventInfo.getEventName(), creatorUid));
+        eventUserRelBaseService.insertNewEventUserRel(new EventUserRel(newEvent.getId(), creatorUid));
+        List<Integer> userUids = eventUserRelBaseService.findAllUidsInEventByEventId(newEvent.getId());
 
-        List<EventUserRel> listUserInEvent = eventUserRelBaseService
-                .insertNewEventUserRel(new EventUserRel(newEvent.getId(), creatorUid));
-
-        EventPayloadData eventPayloadData = EventPayloadData.builder()
-                .eventInfo(newEvent.toEventInfo())
-                .listUserInEvent(listUserInEvent)
-                .build();
+        EventInfo returnEventInfo = new EventInfo(newEvent);
+        returnEventInfo.setUserIds(userUids);
 
         return JsonResult.builder().code(CommonCode.SUCC).msg("succ")
-                .data(eventPayloadData).build();
+                .data(returnEventInfo).build();
     }
 
     @Override
@@ -48,39 +46,36 @@ public class EventBizServiceImpl implements IEventBizService {
             return JsonResult.builder().code(CommonCode.FAIL).msg("Event was ended!")
                     .data(null).build();
 
-        return joinEvent(eventId, joinUid);
+        EventInfo eventInfo = new EventInfo(eventBaseService.findEventById(eventId));
+        eventInfo.setUserIds(eventUserRelBaseService.insertNewEventUserRel(new EventUserRel(eventId, joinUid)));
+
+        return JsonResult.builder().code(CommonCode.SUCC).msg("succ")
+                .data(eventInfo).build();
     }
+
     @Override
-    public JsonResult joinWithInvite(Integer eventId, Integer joinUid) {
-        return joinEvent(eventId, joinUid);
+    public JsonResult joinWithInvite(Integer eventId, List<Integer> userIds) {
+        List<EventUserRel> eventUserRelList = userIds.parallelStream()
+                .map(uid -> new EventUserRel(eventId, uid)).collect(Collectors.toList());
+
+        List<Integer> listUserIds = eventUserRelBaseService.insertMultiEventUserRel(eventUserRelList);
+
+        EventInfo eventInfo = new EventInfo(eventBaseService.findEventById(eventId));
+        eventInfo.setUserIds(listUserIds);
+
+        return JsonResult.builder().code(CommonCode.SUCC).msg("succ")
+                .data(eventInfo).build();
     }
 
     @Override
     public JsonResult removeUserFromEvent(Integer eventId, Integer removeUid) {
         EventUserRel eventUserRel = eventUserRelBaseService.findByEventIdAndUid(eventId, removeUid);
-        List<EventUserRel> listUserInEvent = eventUserRelBaseService.deleteEventUserRel(eventUserRel);
+        List<Integer> listUserIds = eventUserRelBaseService.deleteEventUserRel(eventUserRel);
 
-        // listUser --> users' id
-
-        EventPayloadData eventPayloadData = EventPayloadData.builder()
-                .eventInfo(eventBaseService.findEventById(eventId).toEventInfo())
-                .listUserInEvent(listUserInEvent)
-                .build();
+        EventInfo eventInfo = new EventInfo(eventBaseService.findEventById(eventId));
+        eventInfo.setUserIds(listUserIds);
 
         return JsonResult.builder().code(CommonCode.SUCC).msg("succ")
-                .data(eventPayloadData).build();
-    }
-
-    private JsonResult joinEvent(Integer eventId, Integer joinUid){
-
-        eventUserRelBaseService.insertNewEventUserRel(new EventUserRel(eventId, joinUid));
-        List<EventUserRel> listUserInEvent = eventUserRelBaseService.findAllByEventId(eventId);
-        EventPayloadData eventPayloadData = EventPayloadData.builder()
-                .eventInfo(eventBaseService.findEventById(eventId).toEventInfo())
-                .listUserInEvent(listUserInEvent)
-                .build();
-
-        return JsonResult.builder().code(CommonCode.SUCC).msg("succ")
-                .data(eventPayloadData).build();
+                .data(eventInfo).build();
     }
 }
