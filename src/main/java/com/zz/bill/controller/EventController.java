@@ -49,6 +49,7 @@ public class EventController {
 
     @RequestMapping(value = "/invite/qr/{code}", method = RequestMethod.POST)
     public JsonResult joinWithQr(@PathVariable String code){
+
         Integer eventId = Utils.decodeQr(code);
         return eventBizService.joinWithScan(eventId, CurrentUserHolder.getCurrentUser().getId());
     }
@@ -58,20 +59,6 @@ public class EventController {
                                 @PathVariable List<Integer> userIds){
 
         return eventBizService.joinWithInvite(eventId, userIds);
-
-       /*
-           1.通过ThreadLocal去拿操作人，是谁在操作这个请求
-               1.1 群主主动加人    //             !=
-               1.2 我扫码主动添加  // threadlocal == joinId
-                    1.2.1 check eventStatus  --> ok join
-
-           返回对象
-               Data
-                   eventInfo //event的基本信息
-                   List<eventUserRel> 默认的参与人员列表
-               Data
-                   TRUE/FALSE
-        */
     }
 
     @RequestMapping(value = "/internal/event/{eventId}/kickout/{userId}", method = RequestMethod.POST)
@@ -81,5 +68,12 @@ public class EventController {
             return JsonResult.builder().code(CommonCode.FAIL).msg("cannot remove yourself!").data(false).build();
 
         return eventBizService.removeUserFromEvent(eventId, removeUid);
+    }
+
+    @PostMapping(value = "/internal/event/spends/{eventId}")
+    JsonResult getSpendShareInfoInEvent(@PathVariable Integer eventId){
+        Integer currencyUid = CurrentUserHolder.getCurrentUser().getId();
+
+        return eventBizService.getSpendShareInfoInEvent(eventId, currencyUid);
     }
 }

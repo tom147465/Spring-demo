@@ -18,9 +18,20 @@ public class Share {
     @Column(name = "amount")
     private BigDecimal amount;
 
+    //todo
+    @Column
+    private BigDecimal receiveAmount;
+
     @Column(name = "user_id")
     private Integer userId;
 
     @Column(name = "spend_id")
     private Integer spendId;
+
+    public Share(BigDecimal amount,BigDecimal receiveAmount, Integer userId, Integer spendId){
+        this.amount = amount;
+        this.receiveAmount = receiveAmount;
+        this.userId = userId;
+        this.spendId = spendId;
+    }
 }

@@ -11,7 +11,6 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class LoginServiceImpl implements ILoginService {
-    //todo 更改 user.get 这个function
 
     @Autowired
     private IUserService userService;

@@ -12,4 +12,5 @@ public interface IEventBizService {
     JsonResult joinWithScan(Integer eventId, Integer joinUid);
     JsonResult joinWithInvite(Integer eventId, List<Integer> userIds);
     JsonResult removeUserFromEvent(Integer eventId, Integer removeUid);
+    JsonResult getSpendShareInfoInEvent(Integer userId, Integer eventId);
 }

@@ -21,7 +21,7 @@ public class Spend {
     private Integer eventId;
 
     @Column(name = "describe")
-    private String desc;
+    private String name;
 
     @Column(name = "amount")
     private BigDecimal amount;
@@ -31,4 +31,12 @@ public class Spend {
 
     @Column(name = "status")
     private SpendStatus status;
+
+    public Spend(Integer eventId, String name, BigDecimal amount, Integer whoPrepay){
+        this.eventId = eventId;
+        this.name = name;
+        this.amount = amount;
+        this.whoPrepay = whoPrepay;
+        this.status = SpendStatus.ACTIVE;
+    }
 }

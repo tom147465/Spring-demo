@@ -4,6 +4,8 @@ import com.zz.bill.CommonCode;
 import com.zz.bill.entity.Event;
 import com.zz.bill.entity.EventUserRel;
 import com.zz.bill.model.JsonResult;
+import com.zz.bill.model.SpendShareInfo;
+import com.zz.bill.model.costDetailsOfEvent;
 import com.zz.bill.model.event.EventInfo;
 import com.zz.bill.model.event.EventPayloadData;
 import com.zz.bill.model.event.EventStatus;
@@ -13,6 +15,7 @@ import com.zz.bill.service.eventBiz.IEventBizService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,5 +80,20 @@ public class EventBizServiceImpl implements IEventBizService {
 
         return JsonResult.builder().code(CommonCode.SUCC).msg("succ")
                 .data(eventInfo).build();
+    }
+
+    @Override
+    public JsonResult getSpendShareInfoInEvent(Integer userId, Integer eventId){
+        List<SpendShareInfo> spendShareInfos = eventBaseService.getSpendShareInfoInEvent(eventId, userId);
+        if(spendShareInfos == null)
+            return new JsonResult(CommonCode.FAIL, "fail", false);
+        BigDecimal totlePrepay = new BigDecimal("0");
+        BigDecimal totleShare = new BigDecimal("0");
+        for (SpendShareInfo info: spendShareInfos) {
+            totlePrepay = totlePrepay.add(info.getPrepayAmount());
+            totleShare = totleShare.add(info.getShareAmount());
+        }
+
+        return new JsonResult(CommonCode.SUCC, "succ", new costDetailsOfEvent(totlePrepay,totleShare,spendShareInfos));
     }
 }
